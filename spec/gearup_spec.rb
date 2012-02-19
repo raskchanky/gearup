@@ -1,62 +1,64 @@
 require 'gearup'
 require 'ostruct'
 
-module Test
-  class WrapDataInBrackets
-
-    def initialize(worker)
-      @worker = worker
-    end
-
-    def call(env)
-      env.data = "[#{env.data}]"
-
-      @worker.call(env)
-    end
-
-  end
-
-  class LogWorkerInputOutput
-
-    def initialize(worker, logger)
-      @worker = worker
-      @logger = logger
-    end
-
-    def call(env)
-      @logger.debug "Input: #{env.data}"
-
-      result = @worker.call(env)
-
-      @logger.debug "Output: #{result}"
-    end
-
-  end
-
-  class ParensWorker
-
-    def initialize(worker)
-      @worker = worker
-    end
-
-    def call(env)
-      "(#{env.data})"
-    end
-
-  end
-end
-
 describe "A geared-up worker" do
 
-  let(:logger) { stub(:logger, :debug => true) }
+  module Test
+    class WrapDataInBrackets
+
+      def initialize(worker)
+        @worker = worker
+      end
+
+      def call(env)
+        env.data = "[#{env.data}]"
+
+        @worker.call(env)
+      end
+
+    end
+
+    Logger = OpenStruct.new(:debug => true)
+
+    class LogWorkerInputOutput
+
+      def initialize(worker, logger)
+        @worker = worker
+        @logger = logger
+      end
+
+      def call(env)
+        @logger.debug "Input: #{env.data}"
+
+        result = @worker.call(env)
+
+        @logger.debug "Output: #{result}"
+      end
+
+    end
+
+    class ParensWorker
+
+      def initialize(worker)
+        @worker = worker
+      end
+
+      def call(env)
+        "(#{env.data})"
+      end
+
+    end
+  end
+
+  let(:logger) { Test::Logger }
   let(:data) { OpenStruct.new(:data => 'data') }
 
   subject do
     Gearup::Builder.build do
-      use WrapDataInBrackets
-      use LogWorkerInputOutput, logger
+      use Test::WrapDataInBrackets
+      use Test::LogWorkerInputOutput, Test::Logger
 
-      run ParensWorker
+      run Test::ParensWorker
     end
   end
 
